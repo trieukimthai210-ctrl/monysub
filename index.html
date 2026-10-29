@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoneyTask - Hệ Thống Kiếm Tiền Online Uy Tín</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0b0f19',
+                        cardBg: '#131c2e',
+                        accent: '#f59e0b',
+                        accentHover: '#d97706',
+                        neonGreen: '#10b981'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0b0f19; color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .glow-box { box-shadow: 0 0 20px rgba(245, 158, 11, 0.15); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col pb-20 md:pb-0">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-cardBg border-b border-gray-800 sticky top-0 z-50 px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <div class="bg-accent text-darkBg font-black px-2.5 py-1 rounded-lg text-lg tracking-wider">MT</div>
+            <span class="font-bold text-lg text-white tracking-wide">Money<span class="text-accent">Task</span></span>
+        </div>
+        <div class="flex items-center space-x-3 bg-darkBg px-3 py-1.5 rounded-full border border-gray-800">
+            <i class="fa-solid fa-wallet text-accent"></i>
+            <span id="userBalance" class="font-bold text-accent">0 đ</span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-4xl w-full mx-auto p-4">
+
+        <!-- TAB 1: NHIỆM VỤ (TASK WALL) -->
+        <div id="tab-tasks" class="tab-content active space-y-4">
+            <div class="bg-gradient-to-r from-amber-600 to-amber-800 rounded-2xl p-5 text-white shadow-lg">
+                <h1 class="text-xl font-bold mb-1">Trung Tâm Nhiệm Vụ</h1>
+                <p class="text-sm text-amber-100">Hoàn thành nhiệm vụ chính xác theo yêu cầu để nhận thưởng ngay vào ví.</p>
+            </div>
+
+            <!-- Task Categories -->
+            <div class="flex space-x-2 overflow-x-auto pb-2">
+                <button onclick="filterTasks('all')" class="px-4 py-1.5 bg-accent text-darkBg font-bold rounded-full text-sm whitespace-nowrap">Tất cả</button>
+                <button onclick="filterTasks('vip')" class="px-4 py-1.5 bg-cardBg border border-gray-700 text-gray-300 hover:text-white rounded-full text-sm whitespace-nowrap">Nhiệm Vụ VIP</button>
+                <button onclick="filterTasks('app')" class="px-4 py-1.5 bg-cardBg border border-gray-700 text-gray-300 hover:text-white rounded-full text-sm whitespace-nowrap">Tải App / Đăng Ký</button>
+                <button onclick="filterTasks('survey')" class="px-4 py-1.5 bg-cardBg border border-gray-700 text-gray-300 hover:text-white rounded-full text-sm whitespace-nowrap">Khảo Sát</button>
+            </div>
+
+            <!-- List of Tasks -->
+            <div id="taskList" class="space-y-3">
+                <!-- Task Items rendered by JS -->
+            </div>
+        </div>
+
+        <!-- TAB 2: LỊCH SỬ DUYỆT (PENDING / HISTORY) -->
+        <div id="tab-history" class="tab-content space-y-4">
+            <h2 class="text-xl font-bold text-white">Lịch Sử Làm Nhiệm Vụ</h2>
+            <p class="text-sm text-gray-400">Các nhiệm vụ bạn đã nộp bằng chứng và trạng thái xét duyệt từ hệ thống.</p>
+            
+            <div id="historyList" class="space-y-3">
+                <!-- History rendered here -->
+            </div>
+        </div>
+
+        <!-- TAB 3: MỜI BẠN BÈ (REFERRAL) -->
+        <div id="tab-referral" class="tab-content space-y-4">
+            <div class="bg-cardBg border border-gray-800 rounded-2xl p-5 text-center space-y-3">
+                <div class="w-12 h-12 bg-amber-500/10 text-accent rounded-full flex items-center justify-center mx-auto text-xl">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <h2 class="text-xl font-bold text-white">Giới Thiệu Bạn Bè Nhận Hoa Hồng</h2>
+                <p class="text-sm text-gray-400">Nhận ngay 10% giá trị tiền thưởng từ mỗi nhiệm vụ mà bạn bè của bạn hoàn thành.</p>
+                
+                <div class="flex items-center space-x-2 bg-darkBg p-2 rounded-xl border border-gray-800">
+                    <input type="text" id="refLink" readonly value="https://moneytask.top/ref/MT883921" class="bg-transparent flex-1 text-sm text-gray-300 px-2 outline-none">
+                    <button onclick="copyRefLink()" class="bg-accent text-darkBg font-bold px-4 py-2 rounded-lg text-sm hover:bg-accentHover">Sao chép</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-cardBg border border-gray-800 p-4 rounded-xl text-center">
+                    <div class="text-gray-400 text-sm">Tổng số bạn bè</div>
+                    <div id="refCount" class="text-2xl font-bold text-white mt-1">0 người</div>
+                </div>
+                <div class="bg-cardBg border border-gray-800 p-4 rounded-xl text-center">
+                    <div class="text-gray-400 text-sm">Hoa hồng nhận được</div>
+                    <div id="refEarnings" class="text-2xl font-bold text-accent mt-1">0 đ</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: RÚT TIỀN (WITHDRAW) -->
+        <div id="tab-withdraw" class="tab-content space-y-4">
+            <div class="bg-cardBg border border-gray-800 rounded-2xl p-5 space-y-4">
+                <h2 class="text-xl font-bold text-white">Yêu Cầu Rút Tiền</h2>
+                
+                <div class="space-y-2">
+                    <label class="text-sm text-gray-400">Chọn phương thức thanh toán</label>
+                    <select id="withdrawMethod" class="w-full bg-darkBg border border-gray-800 rounded-xl p-3 text-white outline-none focus:border-accent">
+                        <option value="momo">Ví Điện Tử MoMo</option>
+                        <option value="banking">Ngân Hàng Nội Địa (MB, VCB, TCB,...)</option>
+                        <option value="card">Thẻ Cào Điện Thoại</option>
+                        <option value="usdt">Crypto USDT (BEP20)</option>
+                    </select>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm text-gray-400">Số tiền muốn rút (Tối thiểu 50.000 đ)</label>
+                    <input type="number" id="withdrawAmount" placeholder="Nhập số tiền..." class="w-full bg-darkBg border border-gray-800 rounded-xl p-3 text-white outline-none focus:border-accent">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm text-gray-400">Thông tin tài khoản / Số điện thoại nhận tiền</label>
+                    <input type="text" id="withdrawAccount" placeholder="VD: Số tài khoản hoặc Số MoMo..." class="w-full bg-darkBg border border-gray-800 rounded-xl p-3 text-white outline-none focus:border-accent">
+                </div>
+
+                <button onclick="requestWithdraw()" class="w-full bg-accent text-darkBg font-bold py-3 rounded-xl hover:bg-accentHover transition">Tạo Lệnh Rút Tiền</button>
+            </div>
+
+            <!-- History Withdrawals -->
+            <div class="space-y-2">
+                <h3 class="font-bold text-white">Lịch sử rút tiền gần đây</h3>
+                <div id="withdrawHistoryList" class="space-y-2">
+                    <div class="bg-cardBg border border-gray-800 p-3 rounded-xl text-center text-sm text-gray-500">Chưa có giao dịch rút tiền nào</div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Nộp Bằng Chứng Nhiệm Vụ -->
+    <div id="submitModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 p-4">
+        <div class="bg-cardBg border border-gray-800 rounded-2xl max-w-md w-full p-5 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 id="modalTaskTitle" class="font-bold text-lg text-white">Nộp Bằng Chứng</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p id="modalTaskDesc" class="text-sm text-gray-400"></p>
+            
+            <div class="space-y-2">
+                <label class="text-sm text-gray-300">Nhập minh chứng (Link ảnh, Username hoặc ID tài khoản đã tạo):</label>
+                <input type="text" id="proofInput" placeholder="VD: tài khoản đã đăng ký hoặc link chụp màn hình..." class="w-full bg-darkBg border border-gray-800 rounded-xl p-3 text-white outline-none focus:border-accent text-sm">
+            </div>
+
+            <button onclick="submitTaskProof()" class="w-full bg-accent text-darkBg font-bold py-3 rounded-xl hover:bg-accentHover">Gửi Xác Nhận Duyệt</button>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar (Mobile & Desktop) -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-cardBg border-t border-gray-800 py-2 px-6 flex justify-around items-center z-40 max-w-4xl mx-auto md:rounded-t-2xl">
+        <button onclick="switchTab('tasks', this)" class="nav-btn flex flex-col items-center text-accent">
+            <i class="fa-solid fa-list-check text-lg"></i>
+            <span class="text-xs mt-1">Nhiệm vụ</span>
+        </button>
+        <button onclick="switchTab('history', this)" class="nav-btn flex flex-col items-center text-gray-400 hover:text-white">
+            <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+            <span class="text-xs mt-1">Lịch sử</span>
+        </button>
+        <button onclick="switchTab('referral', this)" class="nav-btn flex flex-col items-center text-gray-400 hover:text-white">
+            <i class="fa-solid fa-user-plus text-lg"></i>
+            <span class="text-xs mt-1">Giới thiệu</span>
+        </button>
+        <button onclick="switchTab('withdraw', this)" class="nav-btn flex flex-col items-center text-gray-400 hover:text-white">
+            <i class="fa-solid fa-wallet text-lg"></i>
+            <span class="text-xs mt-1">Rút tiền</span>
+        </button>
+    </nav>
+
+    <script>
+        // Data State
+        let state = {
+            balance: parseInt(localStorage.getItem('mt_balance')) || 0,
+            tasks: [
+                { id: 1, title: 'Tạo tài khoản Pro VIP (Không SĐT)', reward: 5000, category: 'vip', desc: 'Tạo một Gmail mới theo hướng dẫn sạch.', status: 'available' },
+                { id: 2, title: 'Tải và đăng ký app tài chính MB', reward: 15000, category: 'app', desc: 'Cài đặt app qua link hệ thống và định danh KYC thành công.', status: 'available' },
+                { id: 3, title: 'Khảo sát thói quen tiêu dùng 2026', reward: 8000, category: 'survey', desc: 'Hoàn thành bảng hỏi gồm 10 câu hỏi ngắn.', status: 'available' },
+                { id: 4, title: 'Theo dõi nhóm Telegram dự án', reward: 3000, category: 'vip', desc: 'Tham gia group và giữ tương tác trong 24h.', status: 'available' }
+            ],
+            history: JSON.parse(localStorage.getItem('mt_history')) || [],
+            withdrawals: JSON.parse(localStorage.getItem('mt_withdrawals')) || []
+        };
+
+        let currentActiveTaskId = null;
+
+        function saveState() {
+            localStorage.setItem('mt_balance', state.balance);
+            localStorage.setItem('mt_history', JSON.stringify(state.history));
+            localStorage.setItem('mt_withdrawals', JSON.stringify(state.withdrawals));
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('userBalance').innerText = state.balance.toLocaleString('vi-VN') + ' đ';
+            renderTasks('all');
+            renderHistory();
+            renderWithdrawals();
+        }
+
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('text-accent');
+                el.classList.add('text-gray-400');
+            });
+            btnElement.classList.remove('text-gray-400');
+            btnElement.classList.add('text-accent');
+        }
+
+        function renderTasks(category) {
+            const listEl = document.getElementById('taskList');
+            listEl.innerHTML = '';
+
+            let filtered = state.tasks;
+            if (category !== 'all') {
+                filtered = state.tasks.filter(t => t.category === category);
+            }
+
+            filtered.forEach(task => {
+                listEl.innerHTML += `
+                    <div class="bg-cardBg border border-gray-800 p-4 rounded-xl flex items-center justify-between">
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-amber-500/10 text-accent text-xs font-bold px-2 py-0.5 rounded uppercase">${task.category}</span>
+                                <h3 class="font-bold text-white text-sm md:text-base">${task.title}</h3>
+                            </div>
+                            <p class="text-xs text-gray-400">${task.desc}</p>
+                            <div class="text-accent font-bold text-sm">+${task.reward.toLocaleString('vi-VN')} đ</div>
+                        </div>
+                        <button onclick="openModal(${task.id})" class="bg-accent text-darkBg font-bold px-4 py-2 rounded-lg text-sm hover:bg-accentHover shrink-0">Làm ngay</button>
+                    </div>
+                `;
+            });
+        }
+
+        function filterTasks(cat) {
+            renderTasks(cat);
+        }
+
+        function openModal(id) {
+            currentActiveTaskId = id;
+            let task = state.tasks.find(t => t.id === id);
+            document.getElementById('modalTaskTitle').innerText = task.title;
+            document.getElementById('modalTaskDesc').innerText = task.desc;
+            document.getElementById('proofInput').value = '';
+            document.getElementById('submitModal').classList.remove('hidden');
+            document.getElementById('submitModal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('submitModal').classList.remove('flex');
+            document.getElementById('submitModal').classList.add('hidden');
+        }
+
+        function submitTaskProof() {
+            let proof = document.getElementById('proofInput').value.trim();
+            if(!proof) {
+                alert('Vui lòng nhập thông tin bằng chứng!');
+                return;
+            }
+
+            let task = state.tasks.find(t => t.id === currentActiveTaskId);
+            
+            // Thêm vào lịch sử chờ duyệt
+            state.history.unshift({
+                title: task.title,
+                reward: task.reward,
+                proof: proof,
+                time: new Date().toLocaleDateString('vi-VN'),
+                status: 'Chờ duyệt'
+            });
+
+            // Mô phỏng tự động duyệt sau 3 giây cho mượt mà trải nghiệm thực tế
+            let historyIndex = 0;
+            setTimeout(() => {
+                state.history[historyIndex].status = 'Đã duyệt';
+                state.balance += task.reward;
+                saveState();
+            }, 4000);
+
+            closeModal();
+            saveState();
+            switchTab('history', document.querySelectorAll('.nav-btn')[1]);
+        }
+
+        function renderHistory() {
+            const hList = document.getElementById('historyList');
+            if(state.history.length === 0) {
+                hList.innerHTML = `<div class="bg-cardBg border border-gray-800 p-4 rounded-xl text-center text-sm text-gray-500">Chưa có lịch sử làm nhiệm vụ</div>`;
+                return;
+            }
+            hList.innerHTML = '';
+            state.history.forEach(item => {
+                let badgeColor = item.status === 'Đã duyệt' ? 'text-neonGreen bg-emerald-500/10' : 'text-amber-400 bg-amber-500/10';
+                hList.innerHTML += `
+                    <div class="bg-cardBg border border-gray-800 p-3 rounded-xl flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-white text-sm">${item.title}</div>
+                            <div class="text-xs text-gray-400">Minh chứng: ${item.proof}</div>
+                            <div class="text-xs text-gray-500 mt-1">${item.time}</div>
+                        </div>
+                        <div class="text-right space-y-1">
+                            <div class="text-accent font-bold text-sm">+${item.reward.toLocaleString()}đ</div>
+                            <span class="text-xs px-2 py-0.5 rounded font-bold ${badgeColor}">${item.status}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function requestWithdraw() {
+            let amount = parseInt(document.getElementById('withdrawAmount').value);
+            let account = document.getElementById('withdrawAccount').value.trim();
+            let method = document.getElementById('withdrawMethod').value;
+
+            if(isNaN(amount) || amount < 50000) {
+                alert('Số tiền rút tối thiểu là 50.000 đ');
+                return;
+            }
+            if(amount > state.balance) {
+                alert('Số dư ví không đủ để rút!');
+                return;
+            }
+            if(!account) {
+                alert('Vui lòng nhập thông tin tài khoản nhận tiền!');
+                return;
+            }
+
+            state.balance -= amount;
+            state.withdrawals.unshift({
+                method: method.toUpperCase(),
+                amount: amount,
+                account: account,
+                time: new Date().toLocaleDateString('vi-VN'),
+                status: 'Đang xử lý'
+            });
+
+            saveState();
+            alert('Tạo lệnh rút tiền thành công! Hệ thống sẽ chuyển khoản trong 24h.');
+            document.getElementById('withdrawAmount').value = '';
+            document.getElementById('withdrawAccount').value = '';
+        }
+
+        function renderWithdrawals() {
+            const wList = document.getElementById('withdrawHistoryList');
+            if(state.withdrawals.length === 0) {
+                wList.innerHTML = `<div class="bg-cardBg border border-gray-800 p-3 rounded-xl text-center text-sm text-gray-500">Chưa có giao dịch rút tiền nào</div>`;
+                return;
+            }
+            wList.innerHTML = '';
+            state.withdrawals.forEach(w => {
+                wList.innerHTML += `
+                    <div class="bg-cardBg border border-gray-800 p-3 rounded-xl flex justify-between items-center text-sm">
+                        <div>
+                            <div class="font-bold text-white">${w.method} - ${w.amount.toLocaleString()} đ</div>
+                            <div class="text-xs text-gray-400">TK: ${w.account} (${w.time})</div>
+                        </div>
+                        <span class="text-xs text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded font-bold">${w.status}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function copyRefLink() {
+            let copyText = document.getElementById("refLink");
+            copyText.select();
+            navigator.clipboard.writeText(copyText.value);
+            alert("Đã sao chép liên kết giới thiệu!");
+        }
+
+        // Khởi chạy khi load trang
+        updateUI();
+    </script>
+</body>
+</html>
