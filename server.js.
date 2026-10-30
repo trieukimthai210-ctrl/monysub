@@ -1,0 +1,242 @@
+
+const express = require("express");
+const session = require("express-session");
+const bcrypt = require("bcryptjs");
+const Database = require("better-sqlite3");
+
+const app = express();
+const db = new Database("taskhub.db");
+
+app.use(express.json());
+app.use(express.static("public"));
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || "demo-secret-change-before-deploy",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production"
+  }
+}));
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  role TEXT DEFAULT 'user',
+  balance INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS tasks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  reward INTEGER NOT NULL,
+  description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS submissions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
+  task_id INTEGER,
+  status TEXT DEFAULT 'pending'
+);
+
+CREATE TABLE IF NOT EXISTS withdrawals (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
+  amount INTEGER,
+  status TEXT DEFAULT 'pending'
+);
+`);
+
+if (db.prepare("SELECT COUNT(*) n FROM tasks").get().n === 0) {
+  db.prepare(
+    "INSERT INTO tasks(title,reward,description) VALUES(?,?,?)"
+  ).run("Nhiệm vụ thử nghiệm", 100, "Hoàn thành nhiệm vụ mẫu.");
+}
+
+function auth(req, res, next) {
+  if (!req.session.user) {
+    return res.status(401).json({ error: "Vui lòng đăng nhập" });
+  }
+  next();
+}
+
+function admin(req, res, next) {
+  if (req.session.user?.role !== "admin") {
+    return res.status(403).json({ error: "Không có quyền admin" });
+  }
+  next();
+}
+
+app.post("/api/register", async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password || password.length < 8) {
+    return res.status(400).json({
+      error: "Mật khẩu phải có ít nhất 8 ký tự"
+    });
+  }
+
+  try {
+    const hash = await bcrypt.hash(password, 12);
+
+    db.prepare(
+      "INSERT INTO users(username,password) VALUES(?,?)"
+    ).run(username, hash);
+
+    res.json({ success: true });
+  } catch {
+    res.status(400).json({ error: "Tên đăng nhập đã tồn tại" });
+  }
+});
+
+app.post("/api/login", async (req, res) => {
+  const user = db.prepare(
+    "SELECT * FROM users WHERE username=?"
+  ).get(req.body.username);
+
+  if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
+    return res.status(401).json({ error: "Sai tài khoản hoặc mật khẩu" });
+  }
+
+  req.session.user = {
+    id: user.id,
+    username: user.username,
+    role: user.role
+  };
+
+  res.json({ success: true });
+});
+
+app.post("/api/logout", (req, res) => {
+  req.session.destroy(() => res.json({ success: true }));
+});
+
+app.get("/api/me", auth, (req, res) => {
+  const user = db.prepare(
+    "SELECT id,username,role,balance FROM users WHERE id=?"
+  ).get(req.session.user.id);
+
+  res.json(user);
+});
+
+app.get("/api/tasks", auth, (req, res) => {
+  res.json(db.prepare("SELECT * FROM tasks").all());
+});
+
+app.post("/api/tasks/:id/submit", auth, (req, res) => {
+  const task = db.prepare(
+    "SELECT * FROM tasks WHERE id=?"
+  ).get(req.params.id);
+
+  if (!task) return res.status(404).json({ error: "Không tìm thấy nhiệm vụ" });
+
+  const old = db.prepare(
+    "SELECT id FROM submissions WHERE user_id=? AND task_id=?"
+  ).get(req.session.user.id, task.id);
+
+  if (old) return res.status(400).json({ error: "Đã gửi nhiệm vụ này" });
+
+  db.prepare(
+    "INSERT INTO submissions(user_id,task_id) VALUES(?,?)"
+  ).run(req.session.user.id, task.id);
+
+  res.json({ success: true });
+});
+
+app.post("/api/withdraw", auth, (req, res) => {
+  const amount = Number(req.body.amount);
+
+  const user = db.prepare(
+    "SELECT balance FROM users WHERE id=?"
+  ).get(req.session.user.id);
+
+  if (!Number.isInteger(amount) || amount <= 0 || amount > user.balance) {
+    return res.status(400).json({ error: "Số điểm không hợp lệ" });
+  }
+
+  db.prepare(
+    "INSERT INTO withdrawals(user_id,amount) VALUES(?,?)"
+  ).run(req.session.user.id, amount);
+
+  res.json({ success: true, message: "Đã gửi yêu cầu chờ admin" });
+});
+
+app.get("/api/admin/submissions", auth, admin, (req, res) => {
+  res.json(db.prepare(`
+    SELECT s.id,u.username,t.title,t.reward,s.status
+    FROM submissions s
+    JOIN users u ON u.id=s.user_id
+    JOIN tasks t ON t.id=s.task_id
+    ORDER BY s.id DESC
+  `).all());
+});
+
+app.post("/api/admin/submissions/:id/approve", auth, admin, (req, res) => {
+  const item = db.prepare(
+    "SELECT * FROM submissions WHERE id=? AND status='pending'"
+  ).get(req.params.id);
+
+  if (!item) return res.status(404).json({ error: "Không tìm thấy yêu cầu" });
+
+  const reward = db.prepare(
+    "SELECT reward FROM tasks WHERE id=?"
+  ).get(item.task_id).reward;
+
+  db.transaction(() => {
+    db.prepare(
+      "UPDATE submissions SET status='approved' WHERE id=?"
+    ).run(item.id);
+
+    db.prepare(
+      "UPDATE users SET balance=balance+? WHERE id=?"
+    ).run(reward, item.user_id);
+  })();
+
+  res.json({ success: true });
+});
+
+app.get("/api/admin/withdrawals", auth, admin, (req, res) => {
+  res.json(db.prepare(`
+    SELECT w.id,w.amount,w.status,u.username
+    FROM withdrawals w
+    JOIN users u ON u.id=w.user_id
+    ORDER BY w.id DESC
+  `).all());
+});
+
+app.post("/api/admin/withdrawals/:id/paid", auth, admin, (req, res) => {
+  const item = db.prepare(
+    "SELECT * FROM withdrawals WHERE id=? AND status='pending'"
+  ).get(req.params.id);
+
+  if (!item) return res.status(404).json({ error: "Không tìm thấy yêu cầu" });
+
+  try {
+    db.transaction(() => {
+      const result = db.prepare(
+        "UPDATE users SET balance=balance-? WHERE id=? AND balance>=?"
+      ).run(item.amount, item.user_id, item.amount);
+
+      if (!result.changes) throw new Error("Số dư không đủ");
+
+      db.prepare(
+        "UPDATE withdrawals SET status='paid' WHERE id=?"
+      ).run(item.id);
+    })();
+
+    res.json({ success: true });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log("Server chạy tại cổng " + PORT);
+});
