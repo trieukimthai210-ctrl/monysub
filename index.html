@@ -1,566 +1,452 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>MoneyTask - Nền Tảng Kiếm Tiền Online</title>
-  <!-- Tailwind CSS & FontAwesome -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            app: {
-              bg: '#090d16',
-              surface: '#131c2e',
-              border: '#1e293b',
-              accent: '#3b82f6', // Blue Neon
-              neon: '#06b6d4',   // Cyan Neon
-              success: '#10b981',
-              warning: '#f59e0b'
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MoneyTask - Nền tảng kiếm tiền trực tuyến</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { bg: '#0b0f19', card: '#151c2c', border: '#232d42', primary: '#10b981', accent: '#f59e0b', dark: '#04060b' }
+                    }
+                }
             }
-          }
         }
-      }
-    }
-  </script>
-  <style>
-    body {
-      background-color: #090d16;
-      color: #f8fafc;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      user-select: none;
-    }
-    .card-glass {
-      background: rgba(19, 28, 46, 0.75);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.07);
-    }
-    .glow-effect {
-      box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
-    }
-    .nav-active {
-      color: #06b6d4 !important;
-    }
-    .nav-active i {
-      transform: translateY(-2px);
-      filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.6));
-    }
-    /* Hide scrollbar */
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-  </style>
+    </script>
+    <style>
+        body { background-color: #04060b; color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; user-select: none; }
+        .glass { background: rgba(21, 28, 44, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .active-nav { color: #10b981 !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
 <body class="pb-24 pt-16 min-h-screen flex flex-col justify-between">
 
-  <!-- HEADER THANH TRÊN -->
-  <header class="fixed top-0 left-0 right-0 h-16 bg-app-bg/90 backdrop-blur-md border-b border-app-border z-40 px-4 flex items-center justify-between">
-    <div class="flex items-center space-x-2.5">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-cyan-500/20">
-        M
-      </div>
+  <!-- HEADER -->
+  <header class="fixed top-0 left-0 right-0 h-16 bg-brand-dark/90 backdrop-blur-md border-b border-brand-border z-40 px-4 flex items-center justify-between">
+    <div class="flex items-center space-x-2">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white font-black text-lg">M</div>
       <div>
-        <h1 class="font-black text-base tracking-wider text-white">MONEY<span class="text-cyan-400">TASK</span></h1>
-        <p class="text-[10px] text-cyan-300/70 -mt-1 font-medium">Hệ thống nhiệm vụ trực tuyến</p>
+        <h1 class="font-extrabold text-base tracking-wide text-white">MoneyTask</h1>
+        <p class="text-[10px] text-emerald-400 -mt-1 font-medium">Hệ thống kiếm tiền uy tín</p>
       </div>
     </div>
-    
     <div class="flex items-center space-x-2">
-      <div class="card-glass px-3 py-1.5 rounded-full flex items-center space-x-2 border border-app-border">
-        <i class="fa-solid fa-wallet text-cyan-400 text-xs"></i>
-        <span id="headerBalance" class="text-xs font-bold text-cyan-400">0đ</span>
+      <div class="glass px-3 py-1.5 rounded-full flex items-center space-x-1.5 border border-brand-border">
+        <i class="fa-solid fa-wallet text-emerald-400 text-xs"></i>
+        <span id="headerBalance" class="text-xs font-bold text-emerald-400">0đ</span>
       </div>
+      <button onclick="openAdminPanel()" class="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-1.5 rounded-full text-xs font-bold flex items-center space-x-1">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>Admin</span>
+      </button>
     </div>
   </header>
 
-  <!-- THÔNG BÁO CHẠY (TICKER) -->
-  <div class="bg-cyan-950/30 border-b border-cyan-500/10 py-1.5 px-4 flex items-center space-x-2 text-[11px] text-cyan-200">
-    <i class="fa-solid fa-bolt text-cyan-400 animate-bounce"></i>
-    <div class="overflow-hidden whitespace-nowrap w-full">
-      <div class="inline-block animate-pulse">
-        🔥 Tài khoản ***782 vừa nhận 50,000đ từ nhiệm vụ Pro VIP • ⚡ Tài khoản ***901 rút thành công 200,000đ về Momo.
-      </div>
-    </div>
-  </div>
-
-  <!-- NỘI DUNG CHÍNH -->
+  <!-- MAIN CONTENT -->
   <main class="max-w-md mx-auto w-full px-4 pt-4 flex-1 space-y-4">
 
-    <!-- TAB 1: TRANG CHỦ -->
-    <section id="tab-home" class="space-y-4 tab-section">
-      <!-- VÍ TỔNG QUAN -->
-      <div class="card-glass p-5 rounded-2xl relative overflow-hidden glow-effect">
-        <div class="absolute -right-4 -bottom-4 text-cyan-500/10 text-7xl font-black">
-          <i class="fa-solid fa-shield-cat"></i>
-        </div>
-        <p class="text-xs text-gray-400 font-medium">Số dư khả dụng chính thức</p>
-        <h2 id="mainBalance" class="text-2xl font-black text-white mt-1">0 VNĐ</h2>
+    <!-- TAB: TRANG CHỦ -->
+    <section id="tab-home" class="tab-sec space-y-4">
+      <div class="glass p-5 rounded-2xl relative overflow-hidden border border-brand-border">
+        <p class="text-xs text-gray-400 font-medium">Số dư khả dụng</p>
+        <h2 id="homeBalance" class="text-2xl font-black text-white mt-1">0 VNĐ</h2>
         
-        <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-app-border">
+        <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-brand-border">
           <div>
-            <p class="text-[10px] text-gray-400">Đang chờ duyệt</p>
-            <p id="mainPending" class="text-sm font-bold text-amber-400 mt-0.5">0 VNĐ</p>
+            <p class="text-[10px] text-gray-400">Đang chờ Admin duyệt</p>
+            <p id="homePending" class="text-sm font-bold text-amber-400 mt-0.5">0 VNĐ</p>
           </div>
           <div>
             <p class="text-[10px] text-gray-400">Đã hoàn thành</p>
-            <p id="mainCompletedCount" class="text-sm font-bold text-cyan-400 mt-0.5">0 nhiệm vụ</p>
+            <p id="homeCompleted" class="text-sm font-bold text-emerald-400 mt-0.5">0 nhiệm vụ</p>
           </div>
         </div>
       </div>
 
-      <!-- BANNER ĐUA TOP / SỰ KIỆN -->
-      <div class="p-4 rounded-2xl bg-gradient-to-r from-blue-900/50 to-cyan-900/50 border border-cyan-500/20 flex items-center justify-between">
-        <div class="space-y-1">
-          <span class="bg-cyan-500/20 text-cyan-300 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-cyan-500/30">Sự kiện hot</span>
-          <h3 class="text-sm font-bold text-white">Đua Top Nhận Thưởng Tuần</h3>
-          <p class="text-[11px] text-gray-300">Hoàn thành nhiều nhiệm vụ để đứng đầu bảng xếp hạng.</p>
-        </div>
-        <button onclick="switchTab('tasks')" class="bg-cyan-500 hover:bg-cyan-400 text-app-bg font-extrabold text-xs px-3.5 py-2.5 rounded-xl transition shrink-0 shadow-lg shadow-cyan-500/30">
-          Chiến Ngay
-        </button>
+      <!-- BIỂU ĐỒ THỐNG KÊ (Dựa theo hình ảnh gốc) -->
+      <div class="glass p-5 rounded-2xl border border-brand-border">
+        <h3 class="font-bold text-sm text-gray-200 mb-4">Biểu đồ Thu nhập Tháng này (đ)</h3>
+        <canvas id="earningChart" height="150"></canvas>
       </div>
 
-      <!-- NHIỆM VỤ NỔI BẬT -->
       <div class="space-y-3">
         <div class="flex justify-between items-center">
           <h3 class="font-bold text-sm text-gray-200 flex items-center gap-1.5">
-            <i class="fa-solid fa-fire text-amber-400"></i> Nhiệm vụ đề xuất
+            <i class="fa-solid fa-fire text-amber-400"></i> Nhiệm vụ nổi bật
           </h3>
-          <button onclick="switchTab('tasks')" class="text-xs text-cyan-400 hover:underline font-semibold">Tất cả</button>
+          <button onclick="switchTab('tasks')" class="text-xs text-emerald-400 font-semibold">Tất cả</button>
         </div>
-        
-        <div id="homeTaskList" class="space-y-2.5">
-          <!-- Render tự động -->
-        </div>
+        <div id="homeTaskList" class="space-y-2.5"></div>
       </div>
     </section>
 
-    <!-- TAB 2: NHIỆM VỤ -->
-    <section id="tab-tasks" class="space-y-4 tab-section hidden">
+    <!-- TAB: NHIỆM VỤ -->
+    <section id="tab-tasks" class="tab-sec hidden space-y-4">
       <div>
         <h2 class="text-lg font-bold text-white">Danh Sách Nhiệm Vụ</h2>
-        <p class="text-xs text-gray-400">Chọn nhiệm vụ phù hợp và làm theo hướng dẫn để nhận tiền</p>
+        <p class="text-xs text-gray-400">Làm nhiệm vụ và gửi bằng chứng để chờ Admin duyệt</p>
       </div>
-
-      <!-- BỘ LỌC DANH MỤC -->
-      <div class="flex space-x-2 overflow-x-auto no-scrollbar py-1">
-        <button onclick="filterCategory('all', this)" class="cat-btn bg-cyan-500 text-app-bg text-xs font-bold px-3.5 py-1.5 rounded-full shrink-0 transition">Tất cả</button>
-        <button onclick="filterCategory('link', this)" class="cat-btn card-glass text-gray-300 text-xs font-medium px-3.5 py-1.5 rounded-full shrink-0 transition">Link Rút Gọn</button>
-        <button onclick="filterCategory('vip', this)" class="cat-btn card-glass text-gray-300 text-xs font-medium px-3.5 py-1.5 rounded-full shrink-0 transition">Nhiệm Vụ Pro VIP</button>
-        <button onclick="filterCategory('offer', this)" class="cat-btn card-glass text-gray-300 text-xs font-medium px-3.5 py-1.5 rounded-full shrink-0 transition">Offerwall</button>
-        <button onclick="filterCategory('social', this)" class="cat-btn card-glass text-gray-300 text-xs font-medium px-3.5 py-1.5 rounded-full shrink-0 transition">Mạng Xã Hội</button>
-      </div>
-
-      <!-- DANH SÁCH TẤT CẢ NHIỆM VỤ -->
-      <div id="fullTaskList" class="space-y-3">
-        <!-- Render tự động -->
-      </div>
+      <div id="fullTaskList" class="space-y-3"></div>
     </section>
 
-    <!-- TAB 3: MỜI BẠN BÈ -->
-    <section id="tab-referral" class="space-y-4 tab-section hidden">
+    <!-- TAB: MỜI BẠN -->
+    <section id="tab-referral" class="tab-sec hidden space-y-4">
       <div class="text-center space-y-2 py-2">
-        <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 mx-auto flex items-center justify-center text-2xl text-cyan-400 shadow-lg">
-          <i class="fa-solid fa-user-group"></i>
+        <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 mx-auto flex items-center justify-center text-xl text-emerald-400">
+          <i class="fa-solid fa-users"></i>
         </div>
-        <h2 class="text-lg font-bold text-white">Giới Thiệu Bạn Bè</h2>
-        <p class="text-xs text-gray-400 max-w-xs mx-auto">Nhận ngay <span class="text-cyan-400 font-bold">5% hoa hồng</span> từ mọi nhiệm vụ mà bạn bè của bạn hoàn thành!</p>
+        <h2 class="text-lg font-bold text-white">Mời Bạn Bè Nhận Hoa Hồng</h2>
+        <p class="text-xs text-gray-400">Nhận hoa hồng vĩnh viễn từ bạn bè.</p>
       </div>
-
-      <div class="card-glass p-4 rounded-2xl space-y-3">
-        <label class="text-xs text-gray-400 font-semibold block">Đường dẫn giới thiệu riêng của bạn:</label>
-        <div class="flex space-x-2">
-          <input type="text" id="refLinkInput" readonly value="https://moneytask.top/ref?id=883921" class="bg-app-bg border border-app-border rounded-xl px-3 py-2 text-xs text-cyan-400 font-mono w-full focus:outline-none">
-          <button onclick="copyRef()" class="bg-cyan-500 hover:bg-cyan-400 text-app-bg font-bold px-4 py-2 rounded-xl text-xs shrink-0 transition">
-            Sao Chép
-          </button>
-        </div>
-      </div>
-
-      <div class="card-glass p-4 rounded-2xl grid grid-cols-2 gap-3 text-center">
-        <div class="bg-app-bg/50 p-3 rounded-xl border border-app-border">
-          <p class="text-[10px] text-gray-400">Bạn bè đã tham gia</p>
-          <p id="refCountDisplay" class="text-lg font-black text-white mt-1">0</p>
-        </div>
-        <div class="bg-app-bg/50 p-3 rounded-xl border border-app-border">
-          <p class="text-[10px] text-gray-400">Tổng hoa hồng nhận</p>
-          <p id="refEarnDisplay" class="text-lg font-black text-cyan-400 mt-1">0đ</p>
-        </div>
+      <div class="glass p-4 rounded-2xl space-y-2">
+        <label class="text-xs text-gray-400 font-semibold block">Link giới thiệu của bạn:</label>
+        <input type="text" readonly value="https://moneytask.top/ref?id=99281" class="w-full bg-brand-bg border border-brand-border rounded-xl p-2.5 text-xs text-emerald-400 font-mono focus:outline-none">
       </div>
     </section>
 
-    <!-- TAB 4: RÚT TIỀN -->
-    <section id="tab-withdraw" class="space-y-4 tab-section hidden">
+    <!-- TAB: RÚT TIỀN -->
+    <section id="tab-withdraw" class="tab-sec hidden space-y-4">
       <div>
-        <h2 class="text-lg font-bold text-white">Cổng Rút Tiền</h2>
-        <p class="text-xs text-gray-400">Rút tiền thưởng về Ví điện tử hoặc Ngân hàng nội địa</p>
+        <h2 class="text-lg font-bold text-white">Rút Tiền Về Ngân Hàng / MoMo</h2>
+        <p class="text-xs text-gray-400">Tạo lệnh rút, Admin sẽ kiểm tra và chuyển khoản trực tiếp</p>
       </div>
 
-      <div class="card-glass p-4 rounded-2xl flex justify-between items-center border border-cyan-500/20">
+      <div class="glass p-4 rounded-2xl flex justify-between items-center border border-brand-border">
         <div>
-          <p class="text-xs text-gray-400">Số dư khả dụng rút</p>
-          <h3 id="withdrawAvailableBalance" class="text-xl font-black text-cyan-400 mt-0.5">0đ</h3>
+          <p class="text-xs text-gray-400">Số dư khả dụng</p>
+          <h3 id="wdAvailable" class="text-xl font-black text-emerald-400 mt-0.5">0đ</h3>
         </div>
-        <span class="text-[10px] bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 px-2.5 py-1 rounded-full font-semibold">Min rút: 50,000đ</span>
+        <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded-full font-semibold">Min: 50.000đ</span>
       </div>
 
-      <!-- FORM RÚT TIỀN -->
-      <form onsubmit="handleWithdrawSubmit(event)" class="card-glass p-4 rounded-2xl space-y-3.5">
+      <form onsubmit="handleWithdraw(event)" class="glass p-4 rounded-2xl space-y-3">
         <div>
-          <label class="text-xs text-gray-300 font-semibold mb-1 block">Chọn phương thức thanh toán:</label>
-          <select id="wdMethod" class="w-full bg-app-bg border border-app-border rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-cyan-500">
-            <option value="momo">Ví Điện Tử MoMo</option>
-            <option value="zalopay">Ví Điện Tử ZaloPay</option>
-            <option value="bank">Ngân Hàng Nội Địa (MBBank, VCB, Techcombank,...)</option>
-            <option value="usdt">Crypto USDT (BEP20)</option>
+          <label class="text-xs text-gray-300 font-semibold mb-1 block">Hình thức:</label>
+          <select id="wdMethod" class="w-full bg-brand-bg border border-brand-border rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+            <option value="MoMo">Ví điện tử MoMo</option>
+            <option value="Ngân hàng nội địa">Ngân hàng nội địa (MB, VCB, TCB...)</option>
+            <option value="ZaloPay">ZaloPay</option>
           </select>
         </div>
-
         <div>
-          <label class="text-xs text-gray-300 font-semibold mb-1 block">Tên chủ tài khoản / Người nhận:</label>
-          <input type="text" id="wdName" required placeholder="NGUYEN VAN A" class="w-full bg-app-bg border border-app-border rounded-xl p-2.5 text-xs text-white uppercase focus:outline-none focus:border-cyan-500">
+          <label class="text-xs text-gray-300 font-semibold mb-1 block">Tên chủ tài khoản:</label>
+          <input type="text" id="wdName" required placeholder="NGUYEN VAN A" class="w-full bg-brand-bg border border-brand-border rounded-xl p-2.5 text-xs text-white uppercase focus:outline-none focus:border-emerald-500">
         </div>
-
         <div>
-          <label class="text-xs text-gray-300 font-semibold mb-1 block">Số tài khoản / Số điện thoại nhận:</label>
-          <input type="text" id="wdAccount" required placeholder="Nhập số điện thoại hoặc số tài khoản..." class="w-full bg-app-bg border border-app-border rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-cyan-500">
+          <label class="text-xs text-gray-300 font-semibold mb-1 block">Số tài khoản / Số điện thoại:</label>
+          <input type="text" id="wdAccount" required placeholder="Nhập số tài khoản hoặc SĐT..." class="w-full bg-brand-bg border border-brand-border rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
         </div>
-
         <div>
-          <label class="text-xs text-gray-300 font-semibold mb-1 block">Số tiền muốn rút (VNĐ):</label>
-          <input type="number" id="wdAmount" required min="50000" step="10000" placeholder="Tối thiểu 50,000đ" class="w-full bg-app-bg border border-app-border rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-cyan-500">
+          <label class="text-xs text-gray-300 font-semibold mb-1 block">Số tiền rút (VNĐ):</label>
+          <input type="number" id="wdAmount" required min="50000" step="10000" placeholder="Tối thiểu 50,000đ" class="w-full bg-brand-bg border border-brand-border rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
         </div>
-
-        <button type="submit" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:opacity-90 text-app-bg font-extrabold py-3 rounded-xl text-xs transition shadow-lg shadow-cyan-500/25">
-          GỬI LỆNH RÚT TIỀN
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs transition">
+          GỬI YÊU CẦU RÚT TIỀN
         </button>
       </form>
 
-      <!-- LỊCH SỬ RÚT -->
       <div class="space-y-2">
         <h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider">Lịch Sử Giao Dịch</h3>
-        <div id="wdHistoryList" class="space-y-2">
-          <!-- Render lịch sử -->
-        </div>
+        <div id="wdHistoryList" class="space-y-2"></div>
       </div>
     </section>
 
   </main>
 
-  <!-- MODAL NỘP BẰNG CHỨNG NHIỆM VỤ -->
-  <div id="taskModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="card-glass w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 border border-app-border space-y-4">
-      <div class="flex justify-between items-start">
-        <div class="flex items-center space-x-3">
-          <div class="w-11 h-11 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center text-lg">
-            <i class="fa-solid fa-file-lines" id="modalIcon"></i>
-          </div>
-          <div>
-            <h3 id="modalTitle" class="font-bold text-white text-sm">Tiêu đề nhiệm vụ</h3>
-            <p id="modalReward" class="text-xs font-extrabold text-cyan-400 mt-0.5">+0đ</p>
-          </div>
-        </div>
-        <button onclick="closeModal()" class="text-gray-400 hover:text-white p-1">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
+  <!-- MODAL NỘP NHIỆM VỤ -->
+  <div id="taskModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="glass w-full max-w-md rounded-2xl p-5 border border-brand-border space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 id="modalTitle" class="font-bold text-white text-sm">Làm nhiệm vụ</h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-
-      <div class="bg-app-bg/60 p-3 rounded-xl border border-app-border space-y-1.5 text-xs text-gray-300">
-        <p class="font-bold text-gray-200">Các bước thực hiện:</p>
-        <ol id="modalSteps" class="list-decimal list-inside space-y-1 text-gray-400 text-[11px]">
-          <!-- Steps -->
-        </ol>
+      <p id="modalReward" class="text-xs font-bold text-emerald-400">+0đ</p>
+      <div class="bg-brand-bg p-3 rounded-xl text-xs text-gray-300 space-y-1">
+        <p class="font-semibold text-white">Yêu cầu:</p>
+        <p id="modalStepDesc" class="text-gray-400 text-[11px]"></p>
       </div>
-
-      <a id="modalLink" href="#" target="_blank" class="w-full bg-app-bg border border-cyan-500/40 hover:bg-cyan-950/40 text-cyan-300 font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center space-x-2">
-        <i class="fa-solid fa-external-link-alt"></i>
-        <span>MỞ LINK LÀM NHIỆM VỤ</span>
-      </a>
-
-      <form onsubmit="submitProof(event)" class="space-y-3">
-        <div>
-          <label class="text-xs text-gray-300 font-semibold mb-1 block">Nhập ID / Tài khoản xác nhận của bạn:</label>
-          <input type="text" id="proofInputText" required placeholder="Ví dụ: Tên tài khoản hoặc mã code nhận được..." class="w-full bg-app-bg border border-app-border rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-cyan-500">
-        </div>
-
-        <button type="submit" class="w-full bg-cyan-500 hover:bg-cyan-400 text-app-bg font-extrabold py-3 rounded-xl text-xs transition shadow-lg shadow-cyan-500/30">
-          NỘP BẰNG CHỨNG (CHỜ DUYỆT)
-        </button>
+      <form onsubmit="submitTaskProof(event)" class="space-y-3">
+        <input type="text" id="proofInput" required placeholder="Nhập Tên tài khoản / ID của bạn để xác nhận..." class="w-full bg-brand-bg border border-brand-border rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+        <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-xs">GỬI BẰNG CHỨNG CHO ADMIN</button>
       </form>
     </div>
   </div>
 
-  <!-- BOTTOM NAVIGATION BAR -->
-  <nav class="fixed bottom-0 left-0 right-0 bg-app-bg/95 backdrop-blur-md border-t border-app-border z-40 px-6 py-2.5">
+  <!-- ADMIN PANEL MODAL -->
+  <div id="adminModal" class="fixed inset-0 bg-black/90 z-50 hidden overflow-y-auto p-4">
+    <div class="max-w-md mx-auto bg-brand-card border border-brand-border rounded-2xl p-5 space-y-4 my-8">
+      <div class="flex justify-between items-center border-b border-brand-border pb-3">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-amber-400"></i> Trang Quản Trị Admin
+        </h3>
+        <button onclick="closeAdminPanel()" class="text-gray-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="space-y-3">
+        <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider">1. Duyệt Yêu Cầu Rút Tiền</h4>
+        <div id="adminWithdrawList" class="space-y-2"></div>
+      </div>
+
+      <div class="space-y-3 pt-3 border-t border-brand-border">
+        <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">2. Duyệt Nhiệm Vụ Thành Viên Gửi</h4>
+        <div id="adminTaskList" class="space-y-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAVIGATION -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-brand-dark/95 backdrop-blur-md border-t border-brand-border z-40 px-6 py-2.5">
     <div class="max-w-md mx-auto flex justify-between items-center text-gray-400">
-      <button onclick="switchTab('home')" id="nav-home" class="nav-btn nav-active flex flex-col items-center space-y-1 transition">
-        <i class="fa-solid fa-house text-base"></i>
-        <span class="text-[10px] font-medium">Trang Chủ</span>
-      </button>
-
-      <button onclick="switchTab('tasks')" id="nav-tasks" class="nav-btn flex flex-col items-center space-y-1 transition">
-        <i class="fa-solid fa-list-check text-base"></i>
-        <span class="text-[10px] font-medium">Nhiệm Vụ</span>
-      </button>
-
-      <button onclick="switchTab('referral')" id="nav-referral" class="nav-btn flex flex-col items-center space-y-1 transition">
-        <i class="fa-solid fa-user-plus text-base"></i>
-        <span class="text-[10px] font-medium">Mời Bạn</span>
-      </button>
-
-      <button onclick="switchTab('withdraw')" id="nav-withdraw" class="nav-btn flex flex-col items-center space-y-1 transition">
-        <i class="fa-solid fa-wallet text-base"></i>
-        <span class="text-[10px] font-medium">Rút Tiền</span>
-      </button>
+      <button onclick="switchTab('home')" id="nav-home" class="nav-btn active-nav flex flex-col items-center space-y-1"><i class="fa-solid fa-house text-base"></i><span class="text-[10px]">Trang chủ</span></button>
+      <button onclick="switchTab('tasks')" id="nav-tasks" class="nav-btn flex flex-col items-center space-y-1"><i class="fa-solid fa-list-check text-base"></i><span class="text-[10px]">Nhiệm vụ</span></button>
+      <button onclick="switchTab('referral')" id="nav-referral" class="nav-btn flex flex-col items-center space-y-1"><i class="fa-solid fa-user-plus text-base"></i><span class="text-[10px]">Mời bạn</span></button>
+      <button onclick="switchTab('withdraw')" id="nav-withdraw" class="nav-btn flex flex-col items-center space-y-1"><i class="fa-solid fa-wallet text-base"></i><span class="text-[10px]">Rút tiền</span></button>
     </div>
   </nav>
 
-  <!-- JAVASCRIPT HỆ THỐNG HOẠT ĐỘNG -->
   <script>
-    const taskDatabase = [
-      {
-        id: 1,
-        title: 'Nhiệm vụ Pro VIP: Tạo tài khoản Gmail',
-        reward: 5000,
-        category: 'vip',
-        icon: 'fa-envelope-circle-check',
-        steps: [
-          'Tạo một tài khoản Gmail mới hoàn toàn trên thiết bị của bạn.',
-          'Không liên kết số điện thoại (nếu có thể để trống).',
-          'Nhập địa chỉ Gmail vừa tạo vào ô bên dưới để hệ thống kiểm tra.'
-        ],
-        link: '#'
-      },
-      {
-        id: 2,
-        title: 'Vượt Link Rút Gọn Nhận Thưởng Nhanh',
-        reward: 500,
-        category: 'link',
-        icon: 'fa-link',
-        steps: [
-          'Bấm vào đường dẫn bên dưới để đi đến trang mã nguồn rút gọn.',
-          'Vượt qua các bước xác minh mã Captcha để lấy mã code cuối cùng.',
-          'Nhập mã code nhận được vào ô xác nhận.'
-        ],
-        link: '#'
-      },
-      {
-        id: 3,
-        title: 'Offerwall PubCrypto: Khảo Sát Nhanh',
-        reward: 12000,
-        category: 'offer',
-        icon: 'fa-chart-pie',
-        steps: [
-          'Truy cập vào hệ thống Offerwall qua đường dẫn liên kết.',
-          'Hoàn thành đầy đủ các câu hỏi khảo sát thị trường.',
-          'Chụp ảnh hoặc lấy ID hoàn thành điền vào form.'
-        ],
-        link: '#'
-      },
-      {
-        id: 4,
-        title: 'Theo dõi và Chia sẻ bài viết Facebook',
-        reward: 3000,
-        category: 'social',
-        icon: 'fa-share-nodes',
-        steps: [
-          'Mở link bài viết sự kiện trên Facebook.',
-          'Thực hiện Like, Bình luận và Chia sẻ ở chế độ công khai.',
-          'Nhập đường link trang cá nhân của bạn để xác thực.'
-        ],
-        link: '#'
-      }
+    let chartInstance = null;
+    const tasks = [
+      { id: 1, title: 'Đăng ký tài khoản App MBBank', reward: 35000, step: 'Tải app qua link hệ thống, mở tài khoản thành công và chụp màn hình.' },
+      { id: 2, title: 'Khảo sát tiêu dùng online T10/2026', reward: 15000, step: 'Hoàn thành 10 câu hỏi khảo sát và điền ID hoàn thành.' },
+      { id: 3, title: 'Like và Share bài viết Fanpage', reward: 5000, step: 'Thả cảm xúc và chia sẻ bài viết công khai trên trang cá nhân.' }
     ];
 
-    // DỮ LIỆU LƯU TRỮ LOCALSTORAGE
-    let appData = JSON.parse(localStorage.getItem('moneytask_clone_data')) || {
+    let db = JSON.parse(localStorage.getItem('moneytask_final_db')) || {
       balance: 0,
       pendingBalance: 0,
       completedCount: 0,
-      refCount: 0,
-      refEarn: 0,
-      submittedTaskIds: [],
-      history: []
+      submittedTasks: [], 
+      withdrawRequests: [] 
     };
 
-    let selectedTaskId = null;
+    let currentTaskId = null;
 
-    function saveAndRefresh() {
-      localStorage.setItem('moneytask_clone_data', JSON.stringify(appData));
-      renderAll();
+    function save() {
+      localStorage.setItem('moneytask_final_db', JSON.stringify(db));
+      refreshUI();
     }
 
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab-section').forEach(el => el.classList.add('hidden'));
-      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('nav-active'));
-
-      document.getElementById('tab-' + tabName).classList.remove('hidden');
-      document.getElementById('nav-' + tabName).classList.add('nav-active');
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-sec').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active-nav'));
+      document.getElementById('tab-' + tab).classList.remove('hidden');
+      document.getElementById('nav-' + tab).classList.add('active-nav');
     }
 
-    function renderAll() {
-      document.getElementById('headerBalance').innerText = appData.balance.toLocaleString('vi-VN') + 'đ';
-      document.getElementById('mainBalance').innerText = appData.balance.toLocaleString('vi-VN') + ' VNĐ';
-      document.getElementById('mainPending').innerText = appData.pendingBalance.toLocaleString('vi-VN') + ' VNĐ';
-      document.getElementById('mainCompletedCount').innerText = appData.completedCount + ' nhiệm vụ';
-      document.getElementById('withdrawAvailableBalance').innerText = appData.balance.toLocaleString('vi-VN') + 'đ';
-      
-      document.getElementById('refCountDisplay').innerText = appData.refCount;
-      document.getElementById('refEarnDisplay').innerText = appData.refEarn.toLocaleString('vi-VN') + 'đ';
+    function refreshUI() {
+      document.getElementById('headerBalance').innerText = db.balance.toLocaleString('vi-VN') + 'đ';
+      document.getElementById('homeBalance').innerText = db.balance.toLocaleString('vi-VN') + ' VNĐ';
+      document.getElementById('homePending').innerText = db.pendingBalance.toLocaleString('vi-VN') + ' VNĐ';
+      document.getElementById('homeCompleted').innerText = db.completedCount;
+      document.getElementById('wdAvailable').innerText = db.balance.toLocaleString('vi-VN') + 'đ';
 
-      renderTaskList('all');
-      renderHistory();
+      renderTasks();
+      renderWithdrawHistory();
+      renderChart();
     }
 
-    function renderTaskList(category) {
-      const homeList = document.getElementById('homeTaskList');
-      const fullList = document.getElementById('fullTaskList');
+    function renderTasks() {
+      const container = document.getElementById('homeTaskList');
+      const fullContainer = document.getElementById('fullTaskList');
 
-      let filtered = taskDatabase;
-      if (category !== 'all') {
-        filtered = taskDatabase.filter(t => t.category === category);
-      }
-
-      // Render Home list (hiển thị 3 nhiệm vụ đầu)
-      const homeHtml = taskDatabase.slice(0, 3).map(t => createTaskCard(t)).join('');
-      if(homeList) homeList.innerHTML = homeHtml;
-
-      // Render Full list
-      if (fullList) {
-        if (filtered.length === 0) {
-          fullList.innerHTML = `<p class="text-center text-xs text-gray-500 py-6">Không có nhiệm vụ nào trong mục này.</p>`;
-        } else {
-          fullList.innerHTML = filtered.map(t => createTaskCard(t)).join('');
-        }
-      }
-    }
-
-    function createTaskCard(task) {
-      const isDone = appData.submittedTaskIds.includes(task.id);
-      return `
-        <div class="card-glass p-3.5 rounded-2xl flex items-center justify-between border border-app-border">
-          <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center text-base">
-              <i class="fa-solid ${task.icon}"></i>
-            </div>
+      const html = tasks.map(t => {
+        const isSubmitted = db.submittedTasks.some(s => s.taskId === t.id);
+        return `
+          <div class="glass p-3.5 rounded-2xl flex items-center justify-between border border-brand-border">
             <div>
-              <h4 class="text-xs font-bold text-white line-clamp-1">${task.title}</h4>
-              <p class="text-xs font-black text-cyan-400 mt-0.5">+${task.reward.toLocaleString('vi-VN')}đ</p>
+              <h4 class="text-xs font-bold text-white">${t.title}</h4>
+              <p class="text-xs font-black text-emerald-400 mt-0.5">+${t.reward.toLocaleString('vi-VN')}đ</p>
             </div>
+            ${isSubmitted ? 
+              `<span class="text-[10px] bg-amber-500/20 text-amber-400 px-2.5 py-1 rounded-full font-semibold border border-amber-500/30">Chờ Admin Duyệt</span>` :
+              `<button onclick="openModal(${t.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl">Làm ngay</button>`
+            }
           </div>
-          ${isDone ? 
-            `<span class="text-[10px] bg-amber-500/20 text-amber-400 px-2.5 py-1 rounded-full font-semibold border border-amber-500/30">Chờ Duyệt</span>` :
-            `<button onclick="openTaskModal(${task.id})" class="bg-cyan-500 hover:bg-cyan-400 text-app-bg text-xs font-bold px-3 py-1.5 rounded-xl transition shadow-md">
-              Làm Ngay
-            </button>`
-          }
-        </div>
-      `;
+        `;
+      }).join('');
+
+      if(container) container.innerHTML = html;
+      if(fullContainer) fullContainer.innerHTML = html;
     }
 
-    function filterCategory(cat, btn) {
-      document.querySelectorAll('.cat-btn').forEach(b => {
-        b.className = "cat-btn card-glass text-gray-300 text-xs font-medium px-3.5 py-1.5 rounded-full shrink-0 transition";
-      });
-      btn.className = "cat-btn bg-cyan-500 text-app-bg text-xs font-bold px-3.5 py-1.5 rounded-full shrink-0 transition";
-      renderTaskList(cat);
-    }
-
-    function openTaskModal(id) {
-      selectedTaskId = id;
-      const task = taskDatabase.find(t => t.id === id);
-      if(!task) return;
-
-      document.getElementById('modalTitle').innerText = task.title;
-      document.getElementById('modalReward').innerText = '+' + task.reward.toLocaleString('vi-VN') + 'đ';
-      document.getElementById('modalLink').href = task.link;
-      document.getElementById('modalIcon').className = `fa-solid ${task.icon}`;
-
-      const stepsOl = document.getElementById('modalSteps');
-      stepsOl.innerHTML = task.steps.map(s => `<li>${s}</li>`).join('');
-
+    function openModal(id) {
+      currentTaskId = id;
+      const t = tasks.find(x => x.id === id);
+      document.getElementById('modalTitle').innerText = t.title;
+      document.getElementById('modalReward').innerText = '+' + t.reward.toLocaleString('vi-VN') + 'đ';
+      document.getElementById('modalStepDesc').innerText = t.step;
       document.getElementById('taskModal').classList.remove('hidden');
     }
 
     function closeModal() {
       document.getElementById('taskModal').classList.add('hidden');
-      document.getElementById('proofInputText').value = '';
+      document.getElementById('proofInput').value = '';
     }
 
-    function submitProof(e) {
+    function submitTaskProof(e) {
       e.preventDefault();
-      const task = taskDatabase.find(t => t.id === selectedTaskId);
-      if(!task) return;
+      const t = tasks.find(x => x.id === currentTaskId);
+      const proof = document.getElementById('proofInput').value;
 
-      appData.submittedTaskIds.push(task.id);
-      appData.pendingBalance += task.reward;
-      appData.completedCount += 1;
+      db.submittedTasks.push({
+        taskId: t.id,
+        title: t.title,
+        reward: t.reward,
+        proof: proof
+      });
+      db.pendingBalance += t.reward;
 
-      saveAndRefresh();
+      save();
       closeModal();
-      alert('Đã gửi bằng chứng thành công! Hệ thống đang chờ duyệt cộng tiền.');
+      alert('Đã gửi bằng chứng thành công! Đang chờ Admin xét duyệt.');
     }
 
-    function handleWithdrawSubmit(e) {
+    function handleWithdraw(e) {
       e.preventDefault();
       const amount = parseInt(document.getElementById('wdAmount').value);
       const method = document.getElementById('wdMethod').value;
       const name = document.getElementById('wdName').value;
       const account = document.getElementById('wdAccount').value;
 
-      if (amount > appData.balance) {
-        alert('Số dư khả dụng không đủ để tạo lệnh rút này!');
+      if(amount > db.balance) {
+        alert('Số dư không đủ!');
         return;
       }
 
-      appData.balance -= amount;
-      appData.history.unshift({
-        id: 'TX' + Math.floor(Math.random() * 89999 + 10000),
-        amount: amount,
-        method: method.toUpperCase(),
-        account: account,
-        status: 'Đang xử lý',
-        date: new Date().toLocaleDateString('vi-VN')
+      db.balance -= amount;
+      db.withdrawRequests.unshift({
+        id: 'WD' + Math.floor(Math.random() * 89999 + 10000),
+        amount, method, name, account,
+        status: 'Chờ duyệt'
       });
 
-      saveAndRefresh();
+      save();
       document.getElementById('wdAmount').value = '';
-      alert('Tạo lệnh rút tiền thành công! Hệ thống sẽ tự động thanh toán sau khi đối soát.');
+      alert('Đã tạo lệnh rút thành công! Vui lòng chờ Admin xử lý.');
     }
 
-    function renderHistory() {
-      const list = document.getElementById('wdHistoryList');
-      if (appData.history.length === 0) {
-        list.innerHTML = `<p class="text-center text-xs text-gray-500 py-3">Chưa có lịch sử rút tiền nào.</p>`;
-        return;
+    function renderWithdrawHistory() {
+      const container = document.getElementById('wdHistoryList');
+      if(container) {
+        if(db.withdrawRequests.length === 0) {
+          container.innerHTML = `<p class="text-center text-xs text-gray-500 py-3">Chưa có lịch sử rút tiền.</p>`;
+          return;
+        }
+
+        container.innerHTML = db.withdrawRequests.map(item => `
+          <div class="glass p-3 rounded-xl flex justify-between items-center text-xs">
+            <div>
+              <p class="font-bold text-white">${item.method} - ${item.account}</p>
+              <p class="text-[10px] text-gray-400">Mã: ${item.id}</p>
+            </div>
+            <div class="text-right">
+              <p class="font-bold text-emerald-400">-${item.amount.toLocaleString('vi-VN')}đ</p>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold ${item.status === 'Đã chuyển khoản' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}">${item.status}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function renderChart() {
+      const ctx = document.getElementById('earningChart').getContext('2d');
+      if(chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
+          datasets: [{
+            label: 'Thu nhập',
+            data: [0, 0, 0, 0, 0, 0, db.balance],
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, grid: { color: '#232d42' } }, x: { grid: { display: false } } }
+        }
+      });
+    }
+
+    function openAdminPanel() {
+      renderAdminData();
+      document.getElementById('adminModal').classList.remove('hidden');
+    }
+
+    function closeAdminPanel() {
+      document.getElementById('adminModal').classList.add('hidden');
+    }
+
+    function renderAdminData() {
+      const wdAdminContainer = document.getElementById('adminWithdrawList');
+      const taskAdminContainer = document.getElementById('adminTaskList');
+
+      if(wdAdminContainer) {
+        if(db.withdrawRequests.length === 0) {
+          wdAdminContainer.innerHTML = `<p class="text-xs text-gray-500">Không có đơn rút nào.</p>`;
+        } else {
+          wdAdminContainer.innerHTML = db.withdrawRequests.map((item, idx) => `
+            <div class="bg-brand-bg p-3 rounded-xl border border-brand-border space-y-1 text-xs">
+              <p class="font-bold text-white">${item.name} - ${item.amount.toLocaleString('vi-VN')}đ</p>
+              <p class="text-gray-400">${item.method}: <span class="text-emerald-400">${item.account}</span></p>
+              <p class="text-amber-400">Trạng thái: ${item.status}</p>
+              ${item.status === 'Chờ duyệt' ? `
+                <button onclick="adminApproveWithdraw(${idx})" class="mt-1 w-full bg-emerald-600 text-white py-1.5 rounded-lg font-bold">Xác nhận đã chuyển khoản</button>
+              ` : ''}
+            </div>
+          `).join('');
+        }
       }
 
-      list.innerHTML = appData.history.map(item => `
-        <div class="card-glass p-3 rounded-xl flex justify-between items-center text-xs">
-          <div>
-            <p class="font-bold text-white">${item.method} - ${item.account}</p>
-            <p class="text-[10px] text-gray-400">${item.date} • Mã: ${item.id}</p>
-          </div>
-          <div class="text-right">
-            <p class="font-black text-cyan-400">-${item.amount.toLocaleString('vi-VN')}đ</p>
-            <span class="text-[9px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-semibold">${item.status}</span>
-          </div>
-        </div>
-      `).join('');
+      if(taskAdminContainer) {
+        if(db.submittedTasks.length === 0) {
+          taskAdminContainer.innerHTML = `<p class="text-xs text-gray-500">Không có nhiệm vụ chờ duyệt.</p>`;
+        } else {
+          taskAdminContainer.innerHTML = db.submittedTasks.map((item, idx) => `
+            <div class="bg-brand-bg p-3 rounded-xl border border-brand-border space-y-1 text-xs">
+              <p class="font-bold text-white">${item.title}</p>
+              <p class="text-gray-400">Tài khoản nộp: <span class="text-cyan-400">${item.proof}</span></p>
+              <p class="text-amber-400">Thưởng: +${item.reward.toLocaleString('vi-VN')}đ</p>
+              <button onclick="adminApproveTask(${idx})" class="mt-1 w-full bg-emerald-600 text-white py-1.5 rounded-lg font-bold">Duyệt Cộng Tiền</button>
+            </div>
+          `).join('');
+        }
+      }
     }
 
-    function copyRef() {
-      const input = document.getElementById('refLinkInput');
-      input.select();
-      navigator.clipboard.writeText(input.value);
-      alert('Đã sao chép link giới thiệu thành công!');
+    function adminApproveWithdraw(idx) {
+      db.withdrawRequests[idx].status = 'Đã chuyển khoản';
+      save();
+      renderAdminData();
+      alert('Đã duyệt thanh toán thành công!');
     }
 
-    window.onload = function() {
-      renderAll();
-    };
+    function adminApproveTask(idx) {
+      const task = db.submittedTasks[idx];
+      db.balance += task.reward;
+      db.pendingBalance -= task.reward;
+      db.completedCount += 1;
+      db.submittedTasks.splice(idx, 1); 
+
+      save();
+      renderAdminData();
+      alert('Đã duyệt nhiệm vụ, tiền đã được cộng vào số dư!');
+    }
+
+    window.onload = refreshUI;
   </script>
 </body>
 </html>
