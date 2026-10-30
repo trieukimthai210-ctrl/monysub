@@ -11,7 +11,7 @@ app.use(express.json());
 app.use(express.static("public"));
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || "demo-secret-change-before-deploy",
+  secret: process.env.SESSION_SECRET || "demo-secret-change-this",
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS withdrawals (
 if (db.prepare("SELECT COUNT(*) n FROM tasks").get().n === 0) {
   db.prepare(
     "INSERT INTO tasks(title,reward,description) VALUES(?,?,?)"
-  ).run("Nhiệm vụ thử nghiệm", 100, "Hoàn thành nhiệm vụ mẫu.");
+  ).run("Nhiệm vụ mẫu", 100, "Nhiệm vụ thử nghiệm.");
 }
 
 function auth(req, res, next) {
@@ -72,12 +72,38 @@ function admin(req, res, next) {
   next();
 }
 
+// Khởi tạo admin bằng biến môi trường
+async function ensureAdmin() {
+  const username = process.env.ADMIN_USERNAME;
+  const password = process.env.ADMIN_PASSWORD;
+
+  if (!username || !password || password.length < 12) {
+    console.log("Chưa cấu hình tài khoản admin.");
+    return;
+  }
+
+  const existing = db.prepare(
+    "SELECT id FROM users WHERE role='admin' LIMIT 1"
+  ).get();
+
+  if (!existing) {
+    const hash = await bcrypt.hash(password, 12);
+
+    db.prepare(
+      "INSERT INTO users(username,password,role) VALUES(?,?,'admin')"
+    ).run(username, hash);
+
+    console.log("Đã tạo tài khoản admin.");
+  }
+}
+
+// Đăng ký
 app.post("/api/register", async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password || password.length < 8) {
     return res.status(400).json({
-      error: "Mật khẩu phải có ít nhất 8 ký tự"
+      error: "Mật khẩu cần ít nhất 8 ký tự"
     });
   }
 
@@ -90,10 +116,13 @@ app.post("/api/register", async (req, res) => {
 
     res.json({ success: true });
   } catch {
-    res.status(400).json({ error: "Tên đăng nhập đã tồn tại" });
+    res.status(400).json({
+      error: "Tên đăng nhập đã tồn tại"
+    });
   }
 });
 
+// Đăng nhập
 app.post("/api/login", async (req, res) => {
   const user = db.prepare(
     "SELECT * FROM users WHERE username=?"
@@ -103,19 +132,27 @@ app.post("/api/login", async (req, res) => {
     return res.status(401).json({ error: "Sai tài khoản hoặc mật khẩu" });
   }
 
-  req.session.user = {
-    id: user.id,
-    username: user.username,
-    role: user.role
-  };
+  req.session.regenerate(err => {
+    if (err) return res.status(500).json({ error: "Lỗi phiên đăng nhập" });
 
-  res.json({ success: true });
+    req.session.user = {
+      id: user.id,
+      username: user.username,
+      role: user.role
+    };
+
+    res.json({ success: true });
+  });
 });
 
+// Đăng xuất
 app.post("/api/logout", (req, res) => {
-  req.session.destroy(() => res.json({ success: true }));
+  req.session.destroy(() => {
+    res.json({ success: true });
+  });
 });
 
+// Thông tin thành viên
 app.get("/api/me", auth, (req, res) => {
   const user = db.prepare(
     "SELECT id,username,role,balance FROM users WHERE id=?"
@@ -124,30 +161,37 @@ app.get("/api/me", auth, (req, res) => {
   res.json(user);
 });
 
+// Danh sách nhiệm vụ
 app.get("/api/tasks", auth, (req, res) => {
   res.json(db.prepare("SELECT * FROM tasks").all());
 });
 
+// Gửi nhiệm vụ
 app.post("/api/tasks/:id/submit", auth, (req, res) => {
   const task = db.prepare(
     "SELECT * FROM tasks WHERE id=?"
   ).get(req.params.id);
 
-  if (!task) return res.status(404).json({ error: "Không tìm thấy nhiệm vụ" });
+  if (!task) {
+    return res.status(404).json({ error: "Không tìm thấy nhiệm vụ" });
+  }
 
   const old = db.prepare(
     "SELECT id FROM submissions WHERE user_id=? AND task_id=?"
   ).get(req.session.user.id, task.id);
 
-  if (old) return res.status(400).json({ error: "Đã gửi nhiệm vụ này" });
+  if (old) {
+    return res.status(400).json({ error: "Bạn đã gửi nhiệm vụ này" });
+  }
 
   db.prepare(
     "INSERT INTO submissions(user_id,task_id) VALUES(?,?)"
   ).run(req.session.user.id, task.id);
 
-  res.json({ success: true });
+  res.json({ success: true, message: "Đã gửi nhiệm vụ" });
 });
 
+// Yêu cầu rút điểm mô phỏng
 app.post("/api/withdraw", auth, (req, res) => {
   const amount = Number(req.body.amount);
 
@@ -155,7 +199,7 @@ app.post("/api/withdraw", auth, (req, res) => {
     "SELECT balance FROM users WHERE id=?"
   ).get(req.session.user.id);
 
-  if (!Number.isInteger(amount) || amount <= 0 || amount > user.balance) {
+  if (!Number.isSafeInteger(amount) || amount <= 0 || amount > user.balance) {
     return res.status(400).json({ error: "Số điểm không hợp lệ" });
   }
 
@@ -163,9 +207,13 @@ app.post("/api/withdraw", auth, (req, res) => {
     "INSERT INTO withdrawals(user_id,amount) VALUES(?,?)"
   ).run(req.session.user.id, amount);
 
-  res.json({ success: true, message: "Đã gửi yêu cầu chờ admin" });
+  res.json({
+    success: true,
+    message: "Đã gửi yêu cầu chờ admin duyệt"
+  });
 });
 
+// Admin xem nhiệm vụ
 app.get("/api/admin/submissions", auth, admin, (req, res) => {
   res.json(db.prepare(`
     SELECT s.id,u.username,t.title,t.reward,s.status
@@ -176,12 +224,15 @@ app.get("/api/admin/submissions", auth, admin, (req, res) => {
   `).all());
 });
 
+// Admin duyệt nhiệm vụ và cộng điểm
 app.post("/api/admin/submissions/:id/approve", auth, admin, (req, res) => {
   const item = db.prepare(
     "SELECT * FROM submissions WHERE id=? AND status='pending'"
   ).get(req.params.id);
 
-  if (!item) return res.status(404).json({ error: "Không tìm thấy yêu cầu" });
+  if (!item) {
+    return res.status(404).json({ error: "Không tìm thấy yêu cầu" });
+  }
 
   const reward = db.prepare(
     "SELECT reward FROM tasks WHERE id=?"
@@ -200,6 +251,7 @@ app.post("/api/admin/submissions/:id/approve", auth, admin, (req, res) => {
   res.json({ success: true });
 });
 
+// Admin xem yêu cầu rút điểm
 app.get("/api/admin/withdrawals", auth, admin, (req, res) => {
   res.json(db.prepare(`
     SELECT w.id,w.amount,w.status,u.username
@@ -209,12 +261,15 @@ app.get("/api/admin/withdrawals", auth, admin, (req, res) => {
   `).all());
 });
 
+// Admin xác nhận yêu cầu rút điểm đã xử lý
 app.post("/api/admin/withdrawals/:id/paid", auth, admin, (req, res) => {
   const item = db.prepare(
     "SELECT * FROM withdrawals WHERE id=? AND status='pending'"
   ).get(req.params.id);
 
-  if (!item) return res.status(404).json({ error: "Không tìm thấy yêu cầu" });
+  if (!item) {
+    return res.status(404).json({ error: "Không tìm thấy yêu cầu" });
+  }
 
   try {
     db.transaction(() => {
@@ -222,7 +277,9 @@ app.post("/api/admin/withdrawals/:id/paid", auth, admin, (req, res) => {
         "UPDATE users SET balance=balance-? WHERE id=? AND balance>=?"
       ).run(item.amount, item.user_id, item.amount);
 
-      if (!result.changes) throw new Error("Số dư không đủ");
+      if (!result.changes) {
+        throw new Error("Số dư không đủ");
+      }
 
       db.prepare(
         "UPDATE withdrawals SET status='paid' WHERE id=?"
@@ -230,13 +287,21 @@ app.post("/api/admin/withdrawals/:id/paid", auth, admin, (req, res) => {
     })();
 
     res.json({ success: true });
-  } catch (e) {
-    res.status(400).json({ error: e.message });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 });
 
+// Khởi động máy chủ
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log("Server chạy tại cổng " + PORT);
-});
+ensureAdmin()
+  .then(() => {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log("TaskHub chạy tại cổng " + PORT);
+    });
+  })
+  .catch(error => {
+    console.error(error);
+    process.exit(1);
+  });
