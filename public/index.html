@@ -1,0 +1,62 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Monysub - Kiếm điểm trực tuyến</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <h2>MONYSUB</h2>
+    <button id="logoutBtn" onclick="logout()" hidden>Đăng xuất</button>
+  </header>
+
+  <main class="container">
+
+    <section id="login">
+      <h1>Chào mừng đến Monysub</h1>
+      <p>Đăng nhập hoặc đăng ký tài khoản</p>
+
+      <input id="username" placeholder="Tên đăng nhập">
+      <input id="password" type="password" placeholder="Mật khẩu (ít nhất 8 ký tự)">
+
+      <button onclick="login()">Đăng nhập</button>
+      <button onclick="register()">Đăng ký</button>
+
+      <p id="message"></p>
+    </section>
+
+    <section id="dashboard" hidden>
+      <h2>Xin chào, <span id="name"></span></h2>
+
+      <div class="balance">
+        <p>Số dư điểm</p>
+        <h1><span id="balance">0</span> điểm</h1>
+      </div>
+
+      <h2>Nhiệm vụ dành cho bạn</h2>
+      <div id="tasks"></div>
+
+      <h2>Gửi yêu cầu rút điểm</h2>
+      <p>Đây là chức năng mô phỏng, không chuyển tiền thật.</p>
+      <input id="amount" type="number" placeholder="Số điểm muốn rút">
+      <button onclick="withdraw()">Gửi yêu cầu</button>
+
+      <section id="admin" hidden>
+        <h2>Quản trị viên</h2>
+
+        <h3>Danh sách nhiệm vụ chờ duyệt</h3>
+        <div id="submissions"></div>
+
+        <h3>Yêu cầu rút điểm</h3>
+        <div id="withdrawals"></div>
+      </section>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
